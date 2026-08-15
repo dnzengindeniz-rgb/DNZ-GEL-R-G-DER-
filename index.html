@@ -1,0 +1,1498 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#20291F">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Defter">
+<link rel="manifest" id="manifestLink" href="">
+<link rel="icon" id="faviconLink" href="">
+<link rel="apple-touch-icon" id="appleIconLink" href="">
+<title>Defter — Gelir Gider Takibi</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap');
+
+  :root{
+    --paper:#F1EEE6;
+    --paper-2:#E8E3D6;
+    --card:#FFFDF9;
+    --ink:#20291F;
+    --ink-soft:#5B6459;
+    --line:#DAD3C0;
+    --income:#2F6F4E;
+    --income-bg:#E3EFE6;
+    --expense:#A8452F;
+    --expense-bg:#F4E4DE;
+    --gold:#B98A2E;
+    --gold-bg:#F3E7CB;
+    --danger:#B3261E;
+    --shadow: 0 1px 2px rgba(32,41,31,0.06), 0 6px 16px rgba(32,41,31,0.07);
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background: var(--paper-2);
+    font-family:'Inter',sans-serif;
+    color:var(--ink);
+    -webkit-font-smoothing:antialiased;
+  }
+  #app-outer{
+    max-width:460px;
+    margin:0 auto;
+    min-height:100vh;
+    background:var(--paper);
+    position:relative;
+    box-shadow: var(--shadow);
+  }
+  @media (min-width:461px){
+    body{padding:24px 0;}
+    #app-outer{min-height:calc(100vh - 48px); border-radius:22px; overflow:hidden;}
+  }
+
+  .num{font-family:'IBM Plex Mono',monospace; font-variant-numeric:tabular-nums;}
+
+  header.topbar{
+    background:var(--ink);
+    color:var(--paper);
+    padding:18px 18px 22px;
+    position:relative;
+  }
+  header.topbar .brand{
+    font-family:'Fraunces',serif; font-weight:600; font-size:22px; letter-spacing:0.2px;
+    display:flex; align-items:baseline; gap:8px;
+  }
+  header.topbar .brand small{font-family:'Inter',sans-serif; font-weight:500; font-size:11px; color:#C9CFC4; letter-spacing:0.4px; text-transform:uppercase;}
+  header.topbar .screen-title{font-size:13px; color:#B9C2B2; margin-top:10px; font-weight:500;}
+  .install-btn{
+    position:absolute; top:16px; right:16px;
+    background:rgba(241,238,230,0.13); border:1px solid rgba(241,238,230,0.35); color:var(--paper);
+    border-radius:9px; padding:6px 10px; font-size:10.5px; font-weight:700; cursor:pointer;
+    display:flex; align-items:center; gap:5px; font-family:'Inter',sans-serif;
+  }
+  .install-btn svg{width:14px;height:14px;}
+
+  #content{ padding:16px 16px 90px; min-height:60vh; }
+
+  /* nav */
+  nav.tabbar{
+    position:sticky; bottom:0; left:0; right:0;
+    display:flex; background:var(--card);
+    border-top:1px solid var(--line);
+    padding:6px 4px calc(6px + env(safe-area-inset-bottom));
+    z-index:10;
+  }
+  nav.tabbar button{
+    flex:1; background:none; border:none; display:flex; flex-direction:column; align-items:center; gap:3px;
+    padding:6px 2px; color:var(--ink-soft); font-family:'Inter',sans-serif; font-size:10.5px; font-weight:600;
+    cursor:pointer; border-radius:10px; letter-spacing:0.2px;
+  }
+  nav.tabbar button svg{width:20px;height:20px;}
+  nav.tabbar button.active{ color:var(--ink); background:var(--paper-2); }
+
+  /* generic */
+  .section-label{
+    font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.6px; color:var(--ink-soft);
+    margin:22px 0 10px;
+  }
+  .section-label:first-child{margin-top:0;}
+  .card{
+    background:var(--card); border:1px solid var(--line); border-radius:14px; padding:14px;
+    box-shadow: var(--shadow);
+  }
+  .btn{
+    display:inline-flex; align-items:center; justify-content:center; gap:6px;
+    font-family:'Inter',sans-serif; font-weight:600; font-size:13.5px;
+    border-radius:10px; border:1px solid var(--line); background:var(--card); color:var(--ink);
+    padding:10px 14px; cursor:pointer;
+  }
+  .btn.primary{ background:var(--ink); color:var(--paper); border-color:var(--ink); }
+  .btn.income{ background:var(--income); color:#fff; border-color:var(--income); }
+  .btn.expense{ background:var(--expense); color:#fff; border-color:var(--expense); }
+  .btn.ghost{ background:transparent; border-color:transparent; color:var(--ink-soft); padding:8px 10px; }
+  .btn.danger{ color:var(--danger); }
+  .btn.block{ width:100%; }
+  .btn.sm{ padding:6px 10px; font-size:12px; }
+  .btn:disabled{ opacity:0.4; cursor:not-allowed; }
+  .row{display:flex; gap:10px;}
+  .row.wrap{flex-wrap:wrap;}
+  .grow{flex:1;}
+
+  label.field-label{ display:block; font-size:11.5px; font-weight:600; color:var(--ink-soft); margin:12px 0 5px; }
+  input[type=text], input[type=number], input[type=date], textarea, select{
+    width:100%; font-family:'Inter',sans-serif; font-size:14.5px; color:var(--ink);
+    background:var(--card); border:1px solid var(--line); border-radius:10px; padding:10px 11px;
+  }
+  textarea{resize:vertical; min-height:56px;}
+  input:focus, select:focus, textarea:focus, button:focus-visible{
+    outline:2px solid var(--gold); outline-offset:1px;
+  }
+
+  .chip{
+    display:inline-flex; align-items:center; gap:6px; padding:8px 12px; border-radius:999px;
+    background:var(--card); border:1px solid var(--line); font-size:13px; font-weight:600; cursor:pointer; color:var(--ink);
+  }
+  .chip.selected{ background:var(--ink); color:var(--paper); border-color:var(--ink); }
+  .chip .dot{width:7px;height:7px;border-radius:50%;background:var(--gold);}
+
+  .cat-card{
+    display:flex; align-items:center; justify-content:space-between; gap:10px;
+    padding:13px 14px; border-radius:12px; border:1px solid var(--line); background:var(--card);
+    cursor:pointer; margin-bottom:9px;
+  }
+  .cat-card.selected{ border-color:var(--ink); box-shadow:inset 0 0 0 1px var(--ink); }
+  .cat-card .name{font-weight:600; font-size:14.5px;}
+  .cat-card .tag{font-size:10.5px; color:var(--gold); font-weight:700; text-transform:uppercase; letter-spacing:0.3px;}
+
+  /* ledger tx card */
+  .tx-card{
+    background:var(--card); border:1px solid var(--line); border-radius:12px; margin-bottom:10px; overflow:hidden;
+  }
+  .tx-card .tx-main{
+    display:flex; align-items:center; gap:12px; padding:12px 13px; cursor:pointer; position:relative;
+  }
+  .tx-card .bar{ width:4px; align-self:stretch; border-radius:3px; flex-shrink:0; }
+  .tx-card .bar.income{background:var(--income);}
+  .tx-card .bar.expense{background:var(--expense);}
+  .tx-card .mid{flex:1; min-width:0;}
+  .tx-card .mid .name{font-weight:600; font-size:14.5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  .tx-card .mid .meta{font-size:11.5px; color:var(--ink-soft); margin-top:2px; display:flex; gap:6px; align-items:center;}
+  .tx-card .amt{font-weight:700; font-size:14.5px; white-space:nowrap;}
+  .tx-card .amt.income{color:var(--income);}
+  .tx-card .amt.expense{color:var(--expense);}
+  .pay-badge{font-size:10px; font-weight:700; padding:2px 7px; border-radius:999px; white-space:nowrap;}
+  .pay-badge.overdue{background:var(--expense-bg); color:var(--expense);}
+  .pay-badge.upcoming{background:var(--gold-bg); color:var(--gold);}
+  .pay-badge.paid{background:var(--income-bg); color:var(--income);}
+  .upcoming-item{
+    display:flex; align-items:center; gap:10px; padding:10px 12px; border:1px solid var(--line); border-radius:12px;
+    background:var(--card); margin-bottom:8px;
+  }
+  .upcoming-item .mid{flex:1; min-width:0;}
+  .upcoming-item .name{font-weight:600; font-size:13.5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  .upcoming-item .meta{font-size:11px; color:var(--ink-soft); margin-top:2px;}
+  .tx-card .detail{ padding:0 14px 14px; border-top:1px dashed var(--line); }
+  .tx-card .detail-row{ display:flex; justify-content:space-between; font-size:13px; padding:5px 0; color:var(--ink-soft); }
+  .tx-card .detail-row b{color:var(--ink); font-weight:600;}
+  .tx-card .detail-actions{display:flex; gap:8px; margin-top:10px;}
+
+  .empty-state{ text-align:center; padding:40px 14px; color:var(--ink-soft); }
+  .empty-state .glyph{font-family:'Fraunces',serif; font-size:34px; color:var(--gold); margin-bottom:6px;}
+  .empty-state p{font-size:13.5px; line-height:1.5; margin:6px 0 0;}
+
+  .summary-grid{ display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:6px; }
+  .summary-grid .stat{ background:var(--card); border:1px solid var(--line); border-radius:12px; padding:12px 13px; }
+  .summary-grid .stat.wide{grid-column:1/-1;}
+  .stat .lbl{font-size:10.5px; text-transform:uppercase; letter-spacing:0.4px; color:var(--ink-soft); font-weight:700;}
+  .stat .val{font-size:19px; font-weight:700; margin-top:4px;}
+  .stat .val.income{color:var(--income);}
+  .stat .val.expense{color:var(--expense);}
+  .stat .diff{font-size:11.5px; margin-top:4px; font-weight:600;}
+  .diff.up{color:var(--income);}
+  .diff.down{color:var(--expense);}
+  .diff.flat{color:var(--ink-soft);}
+
+  .month-nav{display:flex; align-items:center; justify-content:space-between; margin-bottom:12px;}
+  .month-nav .mlabel{font-family:'Fraunces',serif; font-weight:600; font-size:17px;}
+  .month-nav button{background:var(--card); border:1px solid var(--line); border-radius:9px; width:32px; height:32px; cursor:pointer; display:flex; align-items:center; justify-content:center;}
+
+  .chart-wrap{ background:var(--card); border:1px solid var(--line); border-radius:14px; padding:14px; margin-bottom:16px;}
+  .chart-wrap .ctitle{font-weight:700; font-size:13px; margin-bottom:10px;}
+  canvas{max-width:100%;}
+
+  .diff-table{width:100%; border-collapse:collapse; font-size:12.5px;}
+  .diff-table th{ text-align:left; color:var(--ink-soft); font-weight:700; font-size:10.5px; text-transform:uppercase; padding-bottom:6px; border-bottom:1px solid var(--line);}
+  .diff-table td{ padding:8px 0; border-bottom:1px solid var(--line); }
+  .diff-table td.r{text-align:right;}
+
+  .filter-box{background:var(--card); border:1px solid var(--line); border-radius:12px; padding:12px; margin-bottom:14px;}
+  .filter-box .grid2{display:grid; grid-template-columns:1fr 1fr; gap:8px;}
+
+  .att-btns{display:flex; gap:8px; margin-top:6px;}
+  .att-preview{display:flex; align-items:center; gap:8px; background:var(--gold-bg); border:1px solid var(--gold); border-radius:10px; padding:8px 10px; margin-top:8px; font-size:12.5px; font-weight:600;}
+  .att-preview img{width:34px;height:34px;object-fit:cover;border-radius:6px;}
+
+  .toast{
+    position:fixed; left:50%; bottom:86px; transform:translateX(-50%);
+    background:var(--ink); color:var(--paper); padding:10px 16px; border-radius:10px; font-size:13px; font-weight:600;
+    box-shadow:var(--shadow); z-index:50; opacity:0; pointer-events:none; transition:opacity .2s ease, transform .2s ease;
+    max-width:88%; text-align:center;
+  }
+  .toast.show{opacity:1; transform:translateX(-50%) translateY(-4px);}
+
+  .modal-backdrop{position:fixed; inset:0; background:rgba(32,41,31,0.45); display:flex; align-items:flex-end; justify-content:center; z-index:60;}
+  .modal-sheet{background:var(--paper); width:100%; max-width:460px; border-radius:18px 18px 0 0; padding:18px 18px calc(18px + env(safe-area-inset-bottom)); max-height:82vh; overflow-y:auto;}
+  .modal-sheet h3{font-family:'Fraunces',serif; margin:0 0 12px;}
+  .close-x{position:absolute; top:14px; right:14px; background:none; border:none; cursor:pointer; color:var(--ink-soft);}
+
+  .toggle-row{display:flex; gap:8px; margin-bottom:16px;}
+  .toggle-row button{flex:1;}
+
+  .subitem{display:flex; align-items:center; justify-content:space-between; padding:8px 0; border-bottom:1px dashed var(--line); font-size:13px;}
+  .subitem:last-child{border-bottom:none;}
+</style>
+</head>
+<body>
+<div id="app-outer">
+  <div id="app"></div>
+</div>
+
+<script>
+(function(){
+'use strict';
+
+/* ---------------- ICONS ---------------- */
+const ICONS = {
+  dashboard: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg>',
+  add: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg>',
+  records: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 3h11l3 3v15H5z"/><path d="M9 9h6M9 13h6M9 17h4"/></svg>',
+  categories: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.5 12.5 12 21l-9-9 8-8h8.5v8z"/><circle cx="15.5" cy="7.5" r="1"/></svg>',
+  chevL: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6"/></svg>',
+  chevR: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>',
+  close: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>',
+  paperclip: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5 12.4 20a5 5 0 0 1-7-7L13.5 4.9a3.5 3.5 0 0 1 5 5L10.4 18a2 2 0 0 1-3-3l7.6-7.6"/></svg>',
+  camera: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13.5" r="3.3"/></svg>',
+  download: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11m0 0-4-4m4 4 4-4M5 19h14"/></svg>',
+  share: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="12" r="2.4"/><circle cx="18" cy="6" r="2.4"/><circle cx="18" cy="18" r="2.4"/><path d="M8.2 10.8 15.8 7.2M8.2 13.2l7.6 3.6"/></svg>',
+  home: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 11.5 12 4l8 7.5"/><path d="M6 10v9h12v-9"/><path d="M10 19v-5h4v5"/></svg>',
+  calendar: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="5" width="17" height="16" rx="2"/><path d="M8 3v4M16 3v4M3.5 10h17"/></svg>'
+};
+
+/* ---------------- DEFAULT STATE ---------------- */
+function defaultState(){
+  return {
+    categories:{
+      income:[ {id:'inc-'+Date.now()+'-1', name:'Maaş'} ],
+      expense:[
+        {id:'exp-a', name:'Şirket Gideri', isFatura:false},
+        {id:'exp-b', name:'Şahsi Gider', isFatura:false},
+        {id:'exp-c', name:'Ev Gideri', isFatura:false},
+        {id:'exp-d', name:'Fatura', isFatura:true, billTypes:[
+          {id:'bt-1', name:'Elektrik Faturası'},
+          {id:'bt-2', name:'Su Faturası'},
+          {id:'bt-3', name:'Doğalgaz Faturası'},
+          {id:'bt-4', name:'Telefon Faturası'},
+          {id:'bt-5', name:'İnternet Faturası'}
+        ]}
+      ]
+    },
+    transactions:[]
+  };
+}
+
+let state = null;
+let ui = {
+  tab:'dashboard',
+  dashMonth: monthKeyNow(),
+  dashPeriod: 'month',
+  addType:'expense',
+  addCategoryId:null,
+  addBillTypeId:null,
+  addAttachment:null,
+  editId:null,
+  expandedId:null,
+  filters:{ type:'all', categoryId:'all', start:'', end:'', q:'' },
+  catNewIncome:'', catNewExpenseFatura:false
+};
+
+/* ---------------- UTILS ---------------- */
+function uid(p){ return p+'-'+Date.now().toString(36)+Math.random().toString(36).slice(2,7); }
+function escapeHtml(s){ return String(s==null?'':s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function monthKeyNow(){ const d=new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0'); }
+function monthKeyOf(dateStr){ return dateStr ? dateStr.slice(0,7) : ''; }
+function prevMonthKey(mk){ const [y,m]=mk.split('-').map(Number); const d=new Date(y,m-2,1); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0'); }
+function nextMonthKey(mk){ const [y,m]=mk.split('-').map(Number); const d=new Date(y,m,1); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0'); }
+function monthKeyMinus(mk, n){ let cur=mk; for(let i=0;i<n;i++) cur=prevMonthKey(cur); return cur; }
+function monthKeyShift(mk, n){ const [y,m]=mk.split('-').map(Number); const d = new Date(y, m-1+n, 1); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0'); }
+function monthLabel(mk){ const [y,m]=mk.split('-').map(Number); const d=new Date(y,m-1,1); return d.toLocaleDateString('tr-TR',{month:'long', year:'numeric'}); }
+function monthShortLabel(mk){ const [y,m]=mk.split('-').map(Number); const d=new Date(y,m-1,1); return d.toLocaleDateString('tr-TR',{month:'short'}); }
+function fmtCurrency(n){ return (Number(n)||0).toLocaleString('tr-TR',{style:'currency',currency:'TRY',maximumFractionDigits:2}); }
+function fmtDate(s){ if(!s) return '—'; const d=new Date(s+'T00:00:00'); if(isNaN(d)) return s; return d.toLocaleDateString('tr-TR'); }
+function todayStr(){ const d=new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+function byId(id){ return document.getElementById(id); }
+function showToast(msg){ const t=byId('toast'); if(!t) return; t.textContent=msg; t.classList.add('show'); clearTimeout(window.__toastT); window.__toastT=setTimeout(()=>t.classList.remove('show'), 2200); }
+
+/* ---------------- STORAGE BACKEND (auto-detect) ---------------- */
+let storageBackend = null; // 'native' | 'indexeddb' | 'memory'
+let memoryStore = {};
+let idbPromise = null;
+
+function openIdb(){
+  if(idbPromise) return idbPromise;
+  idbPromise = new Promise((resolve,reject)=>{
+    try{
+      const req = indexedDB.open('defter-db', 1);
+      req.onupgradeneeded = ()=>{ req.result.createObjectStore('kv'); };
+      req.onsuccess = ()=> resolve(req.result);
+      req.onerror = ()=> reject(req.error);
+    }catch(e){ reject(e); }
+  });
+  return idbPromise;
+}
+function idbGet(key){
+  return openIdb().then(db=> new Promise((resolve,reject)=>{
+    const tx = db.transaction('kv','readonly');
+    const req = tx.objectStore('kv').get(key);
+    req.onsuccess = ()=> resolve(req.result);
+    req.onerror = ()=> reject(req.error);
+  }));
+}
+function idbSet(key,value){
+  return openIdb().then(db=> new Promise((resolve,reject)=>{
+    const tx = db.transaction('kv','readwrite');
+    tx.objectStore('kv').put(value, key);
+    tx.oncomplete = ()=> resolve(true);
+    tx.onerror = ()=> reject(tx.error);
+  }));
+}
+function idbDelete(key){
+  return openIdb().then(db=> new Promise((resolve,reject)=>{
+    const tx = db.transaction('kv','readwrite');
+    tx.objectStore('kv').delete(key);
+    tx.oncomplete = ()=> resolve(true);
+    tx.onerror = ()=> reject(tx.error);
+  }));
+}
+
+async function detectStorageBackend(){
+  try{
+    if(window.storage && typeof window.storage.set==='function'){
+      const r = await window.storage.set('__probe__','1', false);
+      if(r){ storageBackend='native'; return; }
+    }
+  }catch(e){ /* fall through */ }
+  try{
+    if(window.indexedDB){
+      await idbSet('__probe__','1');
+      storageBackend='indexeddb';
+      try{ if(navigator.storage && navigator.storage.persist){ await navigator.storage.persist(); } }catch(e){}
+      return;
+    }
+  }catch(e){ /* fall through */ }
+  storageBackend='memory';
+  showToast('Tarayıcınız kalıcı depolamayı desteklemiyor, veriler sekme kapanınca silinecek.');
+}
+
+async function storageSet(key, value){
+  if(storageBackend==='native'){
+    try{ const r = await window.storage.set(key, value, false); if(r) return true; }
+    catch(e){}
+    storageBackend='indexeddb';
+  }
+  if(storageBackend==='indexeddb'){
+    try{ await idbSet(key, value); return true; }
+    catch(e){}
+    storageBackend='memory';
+  }
+  memoryStore[key]=value; return true;
+}
+async function storageGet(key){
+  if(storageBackend==='native'){
+    try{ const r = await window.storage.get(key, false); return r ? r.value : null; }
+    catch(e){ return null; }
+  }
+  if(storageBackend==='indexeddb'){
+    try{ const v = await idbGet(key); return v===undefined ? null : v; }
+    catch(e){ return null; }
+  }
+  return memoryStore[key]!==undefined ? memoryStore[key] : null;
+}
+async function storageDelete(key){
+  if(storageBackend==='native'){ try{ await window.storage.delete(key, false); }catch(e){} return; }
+  if(storageBackend==='indexeddb'){ try{ await idbDelete(key); }catch(e){} return; }
+  delete memoryStore[key];
+}
+
+/* ---------------- STATE PERSISTENCE ---------------- */
+async function loadState(){
+  try{
+    const v = await storageGet('app-data');
+    state = v ? JSON.parse(v) : defaultState();
+  }catch(e){ state = defaultState(); }
+  if(!state.categories) state.categories = {income:[],expense:[]};
+  if(!state.categories.income) state.categories.income = [];
+  if(!state.categories.expense) state.categories.expense = [];
+  if(!state.transactions) state.transactions = [];
+}
+async function saveState(){
+  try{
+    const ok = await storageSet('app-data', JSON.stringify(state));
+    if(!ok) showToast('Kaydetme başarısız oldu, tekrar deneyin.');
+    return !!ok;
+  }catch(e){ showToast('Kaydetme hatası oluştu.'); return false; }
+}
+async function saveAttachment(txId, att){
+  try{ await storageSet('att:'+txId, JSON.stringify(att)); }
+  catch(e){ showToast('Ek dosya kaydedilemedi (boyut çok büyük olabilir).'); }
+}
+async function getAttachment(txId){
+  try{ const v = await storageGet('att:'+txId); return v ? JSON.parse(v) : null; }
+  catch(e){ return null; }
+}
+async function deleteAttachment(txId){ try{ await storageDelete('att:'+txId); }catch(e){} }
+
+/* ---------------- BACKUP / RESTORE ---------------- */
+async function buildBackupPayload(){
+  const attachments = {};
+  for(const t of state.transactions){
+    if(t.hasAttachment){
+      const a = await getAttachment(t.id);
+      if(a) attachments[t.id] = a;
+    }
+  }
+  return { version:1, exportedAt:new Date().toISOString(), categories:state.categories, transactions:state.transactions, attachments };
+}
+
+async function exportBackup(){
+  try{
+    const payload = await buildBackupPayload();
+    const blob = new Blob([JSON.stringify(payload)], {type:'application/json'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'defter-yedek-'+todayStr()+'.json';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(()=>URL.revokeObjectURL(url), 5000);
+    showToast('Yedek dosyası indirildi.');
+  }catch(e){ showToast('Yedekleme sırasında hata oluştu.'); }
+}
+
+async function shareBackup(){
+  let payload, blob, fileName, file;
+  try{
+    payload = await buildBackupPayload();
+    fileName = 'defter-yedek-'+todayStr()+'.json';
+    blob = new Blob([JSON.stringify(payload)], {type:'application/json'});
+    file = new File([blob], fileName, {type:'application/json'});
+  }catch(e){ showToast('Yedek dosyası hazırlanamadı.'); return; }
+
+  if(navigator.canShare && navigator.canShare({files:[file]})){
+    try{
+      await navigator.share({ files:[file], title:'Defter Yedek Dosyası', text:'Defter uygulaması yedek dosyası — '+todayStr() });
+      return;
+    }catch(e){
+      if(e && e.name==='AbortError') return; // user cancelled the share sheet
+      /* fall through to download */
+    }
+  }
+  showToast('Bu tarayıcı doğrudan paylaşımı desteklemiyor, dosya indiriliyor.');
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = fileName;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url), 5000);
+}
+
+async function importBackupFile(file){
+  if(!file) return;
+  try{
+    const text = await file.text();
+    const payload = JSON.parse(text);
+    if(!payload || !payload.categories || !Array.isArray(payload.transactions)){ showToast('Geçersiz yedek dosyası.'); return; }
+    if(!confirm('Mevcut tüm veriler bu yedek dosyasındaki verilerle değiştirilecek. Devam edilsin mi?')) return;
+    state.categories = payload.categories;
+    state.transactions = payload.transactions;
+    const ok = await saveState();
+    if(payload.attachments){
+      for(const id in payload.attachments){ await saveAttachment(id, payload.attachments[id]); }
+    }
+    if(ok){ showToast('Veriler yedekten geri yüklendi.'); ui.tab='dashboard'; ui.expandedId=null; renderContent(); }
+  }catch(e){ showToast('Yedek dosyası okunamadı ya da bozuk.'); }
+}
+
+/* ---------------- CATEGORY HELPERS ---------------- */
+function findCat(mainType, id){ return (state.categories[mainType]||[]).find(c=>c.id===id); }
+function findBillType(cat, id){ return cat && cat.billTypes ? cat.billTypes.find(b=>b.id===id) : null; }
+
+/* ---------------- SHELL ---------------- */
+function renderShell(){
+  const app = byId('app');
+  app.innerHTML =
+    '<header class="topbar">'+
+      '<button class="install-btn" id="btnInstallApp">'+ICONS.home+' Ana Ekrana Ekle</button>'+
+      '<div class="brand">Defter <small>Gelir · Gider</small></div>'+
+      '<div class="screen-title" id="screen-title"></div>'+
+    '</header>'+
+    '<div id="content"></div>'+
+    '<nav class="tabbar" id="tabbar">'+
+      tabBtn('dashboard','Panel', ICONS.dashboard)+
+      tabBtn('add','Ekle', ICONS.add)+
+      tabBtn('records','Kayıtlar', ICONS.records)+
+      tabBtn('categories','Kategoriler', ICONS.categories)+
+    '</nav>'+
+    '<div class="toast" id="toast"></div>';
+
+  byId('tabbar').addEventListener('click', e=>{
+    const b = e.target.closest('button[data-tab]');
+    if(!b) return;
+    if(ui.tab==='add' && ui.editId){ ui.editId=null; }
+    ui.tab = b.getAttribute('data-tab');
+    renderContent();
+  });
+
+  byId('btnInstallApp').addEventListener('click', onInstallClick);
+  bindGlobalDelegation();
+}
+
+/* ---------------- PWA / ADD TO HOME SCREEN ---------------- */
+let deferredInstallPrompt = null;
+window.addEventListener('beforeinstallprompt', e=>{
+  e.preventDefault();
+  deferredInstallPrompt = e;
+});
+window.addEventListener('appinstalled', ()=>{ deferredInstallPrompt = null; showToast('Defter ana ekrana eklendi.'); });
+
+async function onInstallClick(){
+  if(deferredInstallPrompt){
+    deferredInstallPrompt.prompt();
+    try{ await deferredInstallPrompt.userChoice; }catch(e){}
+    deferredInstallPrompt = null;
+    return;
+  }
+  openInstallModal();
+}
+
+function openInstallModal(){
+  const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
+  const steps = isIOS
+    ? ['Safari alt menüsünden <b>Paylaş</b> simgesine dokunun.', '<b>Ana Ekrana Ekle</b> seçeneğini seçin.', 'Sağ üstteki <b>Ekle</b> butonuna dokunun.']
+    : ['Tarayıcı menüsünü (⋮) açın.', '<b>Ana ekrana ekle</b> ya da <b>Uygulamayı yükle</b> seçeneğine dokunun.', 'Onaylayıp ekleyin.'];
+  const html =
+    '<div class="modal-backdrop" id="installModalBackdrop">'+
+      '<div class="modal-sheet" style="position:relative;">'+
+        '<button class="close-x" id="installModalClose">'+ICONS.close+'</button>'+
+        '<h3>'+ICONS.home+' Ana Ekrana Ekle</h3>'+
+        '<p style="font-size:13.5px; color:var(--ink-soft); margin-top:-4px;">Defter&#39;i telefonunuzun ana ekranına ekleyip bir uygulama gibi açabilirsiniz:</p>'+
+        '<ol style="padding-left:18px; font-size:13.5px; line-height:1.9;">'+ steps.map(s=>'<li>'+s+'</li>').join('') +'</ol>'+
+        '<button class="btn primary block" id="installModalOk" style="margin-top:6px;">Anladım</button>'+
+      '</div>'+
+    '</div>';
+  document.body.insertAdjacentHTML('beforeend', html);
+  const close = ()=>{ const el = byId('installModalBackdrop'); if(el) el.remove(); };
+  byId('installModalClose').addEventListener('click', close);
+  byId('installModalOk').addEventListener('click', close);
+  byId('installModalBackdrop').addEventListener('click', e=>{ if(e.target.id==='installModalBackdrop') close(); });
+}
+
+function setupPwaAssets(){
+  try{
+    const canvas = document.createElement('canvas');
+    canvas.width = 512; canvas.height = 512;
+    const ctx = canvas.getContext('2d');
+    const r = 96;
+    ctx.fillStyle = '#20291F';
+    ctx.beginPath();
+    ctx.moveTo(r,0); ctx.arcTo(512,0,512,512,r); ctx.arcTo(512,512,0,512,r); ctx.arcTo(0,512,0,0,r); ctx.arcTo(0,0,512,0,r);
+    ctx.closePath(); ctx.fill();
+    ctx.fillStyle = '#B98A2E';
+    ctx.font = '700 300px Georgia, serif';
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText('₺', 256, 288);
+    const dataUrl = canvas.toDataURL('image/png');
+
+    byId('faviconLink').href = dataUrl;
+    byId('appleIconLink').href = dataUrl;
+
+    const manifest = {
+      name: 'Defter — Gelir Gider Takibi',
+      short_name: 'Defter',
+      start_url: '.',
+      display: 'standalone',
+      background_color: '#F1EEE6',
+      theme_color: '#20291F',
+      icons: [
+        { src: dataUrl, sizes: '512x512', type: 'image/png' },
+        { src: dataUrl, sizes: '192x192', type: 'image/png' }
+      ]
+    };
+    const blob = new Blob([JSON.stringify(manifest)], {type:'application/manifest+json'});
+    byId('manifestLink').href = URL.createObjectURL(blob);
+  }catch(e){ /* best effort, ignore failures */ }
+}
+function tabBtn(id,label,icon){
+  return '<button data-tab="'+id+'" class="'+(ui.tab===id?'active':'')+'">'+icon+'<span>'+label+'</span></button>';
+}
+
+const SCREEN_TITLES = { dashboard:'Aylık özet ve karşılaştırma', add:'Yeni kayıt oluştur', records:'Tüm kayıtlar ve filtreleme', categories:'Kategori ve fatura türü yönetimi' };
+
+function renderContent(){
+  byId('tabbar').querySelectorAll('button').forEach(b=>b.classList.toggle('active', b.getAttribute('data-tab')===ui.tab));
+  byId('screen-title').textContent = SCREEN_TITLES[ui.tab] || '';
+  const c = byId('content');
+  if(ui.tab==='dashboard'){ c.innerHTML = renderDashboard(); bindDashboard(); }
+  else if(ui.tab==='add'){ c.innerHTML = renderAdd(); }
+  else if(ui.tab==='records'){ c.innerHTML = renderRecords(); }
+  else if(ui.tab==='categories'){ c.innerHTML = renderCategories(); }
+}
+
+/* =================================================================
+   DASHBOARD
+================================================================= */
+function computeRangeTotals(startMk, endMk){
+  const txs = state.transactions.filter(t=>{ const mk=monthKeyOf(t.tarih); return mk>=startMk && mk<=endMk; });
+  let income=0, expense=0;
+  const byCat = {};
+  txs.forEach(t=>{
+    const amt = Number(t.tutar)||0;
+    if(t.mainType==='income') income+=amt;
+    else{
+      expense+=amt;
+      const key = t.categoryName || 'Diğer';
+      byCat[key] = (byCat[key]||0)+amt;
+    }
+  });
+  return { income, expense, net:income-expense, byCat, count:txs.length };
+}
+function periodRange(anchorMk, period){
+  if(period==='year12'){ return { start: monthKeyMinus(anchorMk,11), end: anchorMk }; }
+  if(period==='year'){ const y = anchorMk.slice(0,4); return { start: y+'-01', end: y+'-12' }; }
+  return { start: anchorMk, end: anchorMk };
+}
+function periodLabel(anchorMk, period){
+  if(period==='year12'){ const r = periodRange(anchorMk, period); return monthLabel(r.start)+' – '+monthLabel(r.end); }
+  if(period==='year'){ return anchorMk.slice(0,4)+' Yılı'; }
+  return monthLabel(anchorMk);
+}
+function diffLine(curr, prev){
+  const amt = curr - prev;
+  let pctLabel;
+  if(prev===0){ pctLabel = curr===0 ? '±0%' : (curr>0?'yeni':'—'); }
+  else{ const p = (amt/Math.abs(prev))*100; pctLabel = (p>=0?'+':'')+p.toFixed(1)+'%'; }
+  const cls = amt>0?'up':(amt<0?'down':'flat');
+  return { amt, pctLabel, cls };
+}
+
+function computeUpcomingPayments(){
+  return state.transactions
+    .filter(t=> t.mainType==='expense' && t.odemeTarihi && !t.odendi)
+    .sort((a,b)=> a.odemeTarihi.localeCompare(b.odemeTarihi));
+}
+function upcomingItemHtml(t){
+  const overdue = t.odemeTarihi < todayStr();
+  return '<div class="upcoming-item">'+
+    '<div class="mid"><div class="name">'+escapeHtml(t.ad)+'</div>'+
+      '<div class="meta">'+escapeHtml(t.categoryName)+(t.billTypeName?(' / '+escapeHtml(t.billTypeName)):'')+'</div>'+
+      '<span class="pay-badge '+(overdue?'overdue':'upcoming')+'" style="margin-top:4px; display:inline-block;">'+(overdue?'Gecikti · ':'')+fmtDate(t.odemeTarihi)+'</span>'+
+    '</div>'+
+    '<div style="text-align:right;">'+
+      '<div class="num" style="font-weight:700; font-size:13.5px;">'+fmtCurrency(t.tutar)+'</div>'+
+      '<button class="btn ghost sm" data-mark-paid="'+t.id+'" style="margin-top:4px;">Ödendi</button>'+
+    '</div>'+
+  '</div>';
+}
+
+const PIE_PALETTE = ['#A8452F','#B98A2E','#5B6459','#2F6F4E','#7A4B3A','#C9A24A','#8E5B4E','#6E7A63'];
+
+function pieChartHtml(byCat){
+  const entries = Object.keys(byCat).map(k=>({name:k, value:byCat[k]}));
+  const total = entries.reduce((s,e)=>s+e.value,0);
+  if(total<=0) return '';
+  const size=200, R=78, C=2*Math.PI*R, W=26;
+  let cum=0;
+  const segs = entries.map((e,i)=>{
+    const frac = e.value/total;
+    const dash = frac*C;
+    const seg = '<circle cx="'+(size/2)+'" cy="'+(size/2)+'" r="'+R+'" fill="none" stroke="'+PIE_PALETTE[i%PIE_PALETTE.length]+'" stroke-width="'+W+'" stroke-dasharray="'+dash.toFixed(2)+' '+(C-dash).toFixed(2)+'" stroke-dashoffset="'+(-cum).toFixed(2)+'" transform="rotate(-90 '+(size/2)+' '+(size/2)+')"></circle>';
+    cum += dash;
+    return seg;
+  }).join('');
+  const svg = '<svg viewBox="0 0 '+size+' '+size+'" width="100%" style="max-width:210px; display:block; margin:0 auto;">'+
+    '<circle cx="'+(size/2)+'" cy="'+(size/2)+'" r="'+R+'" fill="none" style="stroke:var(--line)" stroke-width="'+W+'"></circle>'+
+    segs+
+    '<text x="'+(size/2)+'" y="'+(size/2-4)+'" text-anchor="middle" style="font-family:Inter,sans-serif; font-size:10px; fill:var(--ink-soft); letter-spacing:0.5px;">TOPLAM GİDER</text>'+
+    '<text x="'+(size/2)+'" y="'+(size/2+16)+'" text-anchor="middle" style="font-family:\'IBM Plex Mono\',monospace; font-size:14px; font-weight:700; fill:var(--ink);">'+fmtCurrency(total)+'</text>'+
+  '</svg>';
+  const legend = '<div class="row wrap" style="gap:10px; margin-top:14px; justify-content:center;">'+
+    entries.map((e,i)=>'<span style="display:inline-flex; align-items:center; gap:5px; font-size:11.5px; font-weight:600;">'+
+      '<span style="width:9px;height:9px;border-radius:50%;background:'+PIE_PALETTE[i%PIE_PALETTE.length]+';display:inline-block;flex-shrink:0;"></span>'+
+      escapeHtml(e.name)+' · '+Math.round((e.value/total)*100)+'%</span>').join('')+
+  '</div>';
+  return svg + legend;
+}
+
+function monthlyTrendHtml(monthsArr){
+  const max = Math.max(1, ...monthsArr.map(m=>Math.max(m.income,m.expense)));
+  function bar(val, colorVar){
+    const h = Math.max(Math.round((val/max)*100), val>0?3:0);
+    return '<div style="width:14px; border-radius:3px 3px 1px 1px; background:'+colorVar+'; height:'+h+'%;" title="'+fmtCurrency(val)+'"></div>';
+  }
+  const groups = monthsArr.map(m=>
+    '<div style="display:flex; flex-direction:column; align-items:center; gap:5px; flex-shrink:0;">'+
+      '<div style="display:flex; gap:3px; align-items:flex-end; height:130px;">'+bar(m.income,'var(--income)')+bar(m.expense,'var(--expense)')+'</div>'+
+      '<div style="font-size:10px; font-weight:700; color:var(--ink-soft);">'+m.label+'</div>'+
+    '</div>'
+  ).join('');
+  return '<div style="display:flex; gap:14px; align-items:flex-end; overflow-x:auto; padding:4px 2px 6px;">'+groups+'</div>'+
+    '<div class="row" style="justify-content:center; gap:18px; margin-top:10px; font-size:11.5px; font-weight:600;">'+
+      '<span style="display:inline-flex; align-items:center; gap:5px;"><span style="width:9px;height:9px;border-radius:2px;background:var(--income);display:inline-block;"></span>Gelir</span>'+
+      '<span style="display:inline-flex; align-items:center; gap:5px;"><span style="width:9px;height:9px;border-radius:2px;background:var(--expense);display:inline-block;"></span>Gider</span>'+
+    '</div>';
+}
+
+function comparisonBarsHtml(prev, cur, prevLabel, curLabel){
+  const max = Math.max(prev.income, prev.expense, cur.income, cur.expense, 1);
+  function bar(val, colorVar){
+    const h = Math.max(Math.round((val/max)*100), val>0?3:0);
+    return '<div style="display:flex; flex-direction:column; justify-content:flex-end; align-items:center; height:150px; width:26px;">'+
+      '<div class="num" style="font-size:9.5px; font-weight:700; margin-bottom:4px; color:var(--ink-soft); white-space:nowrap;">'+fmtCurrency(val)+'</div>'+
+      '<div style="width:22px; border-radius:6px 6px 2px 2px; background:'+colorVar+'; height:'+h+'%;"></div>'+
+    '</div>';
+  }
+  return '<div style="display:flex; gap:26px; align-items:flex-end; justify-content:center; padding:4px 4px 0; overflow-x:auto;">'+
+    '<div style="display:flex; gap:10px;">'+bar(prev.income,'var(--income)')+bar(prev.expense,'var(--expense)')+'</div>'+
+    '<div style="display:flex; gap:10px;">'+bar(cur.income,'var(--income)')+bar(cur.expense,'var(--expense)')+'</div>'+
+  '</div>'+
+  '<div style="display:flex; justify-content:center; gap:32px; margin-top:8px; font-size:10.5px; font-weight:700; color:var(--ink-soft); text-align:center;">'+
+    '<div style="max-width:120px;">'+prevLabel+'</div><div style="max-width:120px;">'+curLabel+'</div>'+
+  '</div>'+
+  '<div class="row" style="justify-content:center; gap:18px; margin-top:12px; font-size:11.5px; font-weight:600;">'+
+    '<span style="display:inline-flex; align-items:center; gap:5px;"><span style="width:9px;height:9px;border-radius:2px;background:var(--income);display:inline-block;"></span>Gelir</span>'+
+    '<span style="display:inline-flex; align-items:center; gap:5px;"><span style="width:9px;height:9px;border-radius:2px;background:var(--expense);display:inline-block;"></span>Gider</span>'+
+  '</div>';
+}
+
+function renderDashboard(){
+  const period = ui.dashPeriod;
+  const anchor = ui.dashMonth;
+  const range = periodRange(anchor, period);
+  const prevAnchor = period==='year12' ? monthKeyMinus(range.start,1) : (period==='year' ? monthKeyShift(anchor,-12) : prevMonthKey(anchor));
+  const prevRange = periodRange(prevAnchor, period);
+
+  const cur = computeRangeTotals(range.start, range.end);
+  const prev = computeRangeTotals(prevRange.start, prevRange.end);
+  const dInc = diffLine(cur.income, prev.income);
+  const dExp = diffLine(cur.expense, prev.expense);
+  const dNet = diffLine(cur.net, prev.net);
+
+  const catRows = Object.keys(cur.byCat).sort((a,b)=>cur.byCat[b]-cur.byCat[a]).map(name=>{
+    const c = cur.byCat[name]||0, p = prev.byCat[name]||0;
+    const d = diffLine(c,p);
+    return '<tr><td>'+escapeHtml(name)+'</td><td class="r num">'+fmtCurrency(c)+'</td><td class="r num '+d.cls+'">'+(d.amt>=0?'+':'')+fmtCurrency(d.amt)+'</td><td class="r num '+d.cls+'">'+d.pctLabel+'</td></tr>';
+  }).join('');
+
+  const hasAnyCat = Object.keys(cur.byCat).length>0;
+  const upcoming = computeUpcomingPayments();
+  const distTitle = period==='year12' ? 'Son 12 Ay Gider Dağılımı' : (period==='year' ? 'Yıllık Gider Dağılımı' : 'Aylık Gider Dağılımı');
+  const diffTitle = period==='year12' ? 'Kategori Bazında Dönem Farkı (12 Ay)' : (period==='year' ? 'Kategori Bazında Yıl Farkı' : 'Kategori Bazında Ay Farkı');
+  const compareTitle = period==='year12' ? 'Gelir – Gider Karşılaştırma (Son 12 Ay / Önceki 12 Ay)' : (period==='year' ? 'Gelir – Gider Karşılaştırma (Bu Yıl / Geçen Yıl)' : ('Ocak – '+monthShortLabel(anchor)+' Aylık Grafik'));
+
+  let compareChartHtml;
+  if(period==='month'){
+    const year = anchor.slice(0,4);
+    const curMonthNum = parseInt(anchor.slice(5,7),10);
+    const monthsArr = [];
+    for(let m=1; m<=curMonthNum; m++){
+      const mk = year+'-'+String(m).padStart(2,'0');
+      const t = computeRangeTotals(mk, mk);
+      monthsArr.push({ mk, label: monthShortLabel(mk), income:t.income, expense:t.expense });
+    }
+    compareChartHtml = monthlyTrendHtml(monthsArr);
+  }else{
+    compareChartHtml = comparisonBarsHtml(prev, cur, periodLabel(prevAnchor,period), periodLabel(anchor,period));
+  }
+
+  return ''+
+  '<div class="section-label" style="margin-top:0;">Yaklaşan Ödemeler</div>'+
+  (upcoming.length ?
+    upcoming.map(t=>upcomingItemHtml(t)).join('')
+    : '<div class="empty-state" style="padding:16px 6px;"><p>Bekleyen ödeme yok. Fatura eklerken ödeme tarihi verirseniz burada listelenir.</p></div>')+
+
+  '<div class="toggle-row" style="margin-top:22px;">'+
+    '<button class="btn '+(period==='month'?'primary':'')+'" data-period="month">Aylık</button>'+
+    '<button class="btn '+(period==='year'?'primary':'')+'" data-period="year">Yıllık</button>'+
+    '<button class="btn '+(period==='year12'?'primary':'')+'" data-period="year12">Son 12 Ay</button>'+
+  '</div>'+
+
+  '<div class="month-nav">'+
+    '<button id="mnPrev" aria-label="Önceki dönem">'+ICONS.chevL+'</button>'+
+    '<div class="mlabel" style="font-size:'+(period==='month'?'17px':'14px')+';">'+periodLabel(anchor, period)+'</div>'+
+    '<button id="mnNext" aria-label="Sonraki dönem">'+ICONS.chevR+'</button>'+
+  '</div>'+
+
+  '<div class="summary-grid">'+
+    '<div class="stat"><div class="lbl">Gelir</div><div class="val income num">'+fmtCurrency(cur.income)+'</div>'+
+      '<div class="diff '+dInc.cls+'">'+(dInc.amt>=0?'+':'')+fmtCurrency(dInc.amt)+' · '+dInc.pctLabel+'</div></div>'+
+    '<div class="stat"><div class="lbl">Gider</div><div class="val expense num">'+fmtCurrency(cur.expense)+'</div>'+
+      '<div class="diff '+dExp.cls+'">'+(dExp.amt>=0?'+':'')+fmtCurrency(dExp.amt)+' · '+dExp.pctLabel+'</div></div>'+
+    '<div class="stat wide"><div class="lbl">Net Bakiye</div><div class="val num" style="color:var(--ink)">'+fmtCurrency(cur.net)+'</div>'+
+      '<div class="diff '+dNet.cls+'">'+(dNet.amt>=0?'+':'')+fmtCurrency(dNet.amt)+' · '+dNet.pctLabel+' ('+periodLabel(prevAnchor, period)+' ile karşılaştırma)</div></div>'+
+  '</div>'+
+
+  '<div class="section-label">'+distTitle+'</div>'+
+  '<div class="chart-wrap">'+
+    (hasAnyCat ? pieChartHtml(cur.byCat) :
+      '<div class="empty-state" style="padding:20px 6px;"><div class="glyph">–</div><p>Bu dönem için henüz gider kaydı yok.</p></div>')+
+  '</div>'+
+
+  '<div class="section-label">'+diffTitle+'</div>'+
+  (catRows ?
+    '<div class="card" style="margin-bottom:16px;"><table class="diff-table"><thead><tr><th>Kategori</th><th class="r">Bu Dönem</th><th class="r">Fark</th><th class="r">%</th></tr></thead><tbody>'+catRows+'</tbody></table></div>'
+    : '<div class="empty-state" style="padding:18px 6px;"><p>Karşılaştırma için kategori verisi yok.</p></div>')+
+
+  '<div class="section-label">'+compareTitle+'</div>'+
+  '<div class="chart-wrap" style="margin-bottom:4px;">'+compareChartHtml+'</div>';
+}
+
+function bindDashboard(){
+  byId('mnPrev').addEventListener('click', ()=>{
+    ui.dashMonth = ui.dashPeriod==='year' ? monthKeyShift(ui.dashMonth,-12) : prevMonthKey(ui.dashMonth);
+    renderContent();
+  });
+  byId('mnNext').addEventListener('click', ()=>{
+    ui.dashMonth = ui.dashPeriod==='year' ? monthKeyShift(ui.dashMonth,12) : nextMonthKey(ui.dashMonth);
+    renderContent();
+  });
+  document.querySelectorAll('[data-period]').forEach(el=>{
+    el.addEventListener('click', ()=>{ ui.dashPeriod = el.getAttribute('data-period'); renderContent(); });
+  });
+  document.querySelectorAll('[data-mark-paid]').forEach(el=>{
+    el.addEventListener('click', async ()=>{
+      const id = el.getAttribute('data-mark-paid');
+      const t = state.transactions.find(x=>x.id===id);
+      if(!t) return;
+      t.odendi = true;
+      const ok = await saveState();
+      if(ok){ showToast('Ödendi olarak işaretlendi.'); renderContent(); }
+    });
+  });
+}
+
+/* =================================================================
+   ADD SCREEN
+================================================================= */
+function renderAdd(){
+  const editing = !!ui.editId;
+  const type = ui.addType;
+  const cats = state.categories[type] || [];
+  const selectedCat = findCat(type, ui.addCategoryId);
+  const isFaturaCat = type==='expense' && selectedCat && selectedCat.isFatura;
+  const selectedBill = isFaturaCat ? findBillType(selectedCat, ui.addBillTypeId) : null;
+
+  let html = '';
+  html += '<div class="toggle-row">'+
+    '<button class="btn '+(type==='income'?'income':'')+'" data-add-type="income">Gelir</button>'+
+    '<button class="btn '+(type==='expense'?'expense':'')+'" data-add-type="expense">Gider</button>'+
+  '</div>';
+
+  if(editing){
+    html += '<div class="card" style="margin-bottom:14px; background:var(--gold-bg); border-color:var(--gold);"><b>Kayıt düzenleniyor.</b> Değişiklikleri kaydedin ya da iptal edin.</div>';
+  }
+
+  html += '<div class="section-label">Kategori Seç</div>';
+  if(cats.length===0){
+    html += '<div class="empty-state"><div class="glyph">–</div><p>Henüz '+(type==='income'?'gelir':'gider')+' kategorisi eklemediniz.<br>Önce <b>Kategoriler</b> sekmesinden bir kategori oluşturun.</p></div>';
+  }else{
+    html += cats.map(c=>{
+      const sel = c.id===ui.addCategoryId;
+      return '<div class="cat-card '+(sel?'selected':'')+'" data-select-cat="'+c.id+'">'+
+        '<span class="name">'+escapeHtml(c.name)+'</span>'+
+        (c.isFatura ? '<span class="tag">Fatura</span>' : '<span></span>')+
+      '</div>';
+    }).join('');
+  }
+
+  if(isFaturaCat){
+    html += '<div class="section-label">Fatura Türü</div>';
+    const bts = selectedCat.billTypes||[];
+    if(bts.length===0){
+      html += '<div class="empty-state" style="padding:16px 6px;"><p>Bu kategoriye henüz fatura türü eklenmedi. Kategoriler sekmesinden ekleyin.</p></div>';
+    }else{
+      html += '<div class="row wrap" style="margin-bottom:6px;">'+bts.map(b=>
+        '<div class="chip '+(b.id===ui.addBillTypeId?'selected':'')+'" data-select-bill="'+b.id+'"><span class="dot"></span>'+escapeHtml(b.name)+'</div>'
+      ).join('')+'</div>';
+    }
+  }
+
+  const canShowForm = selectedCat && (!isFaturaCat || selectedBill);
+  if(canShowForm){
+    const A = ui.addFields || {};
+    if(type==='income'){
+      html += formIncome(A);
+    }else if(isFaturaCat){
+      html += formFatura(A, selectedBill);
+    }else{
+      html += formNormalExpense(A);
+    }
+
+    html += '<label class="field-label">Ek Belge</label>';
+    html += '<div class="att-btns">'+
+      '<button class="btn sm" id="btnAttachPdf">'+ICONS.paperclip+' PDF Ekle</button>'+
+      '<button class="btn sm" id="btnScanPdf">'+ICONS.camera+' Tara</button>'+
+    '</div>';
+    html += '<input type="file" id="filePdfInput" accept="application/pdf,image/*" style="display:none">';
+    html += '<input type="file" id="fileScanInput" accept="image/*" capture="environment" style="display:none">';
+    if(ui.addAttachment){
+      const isImg = (ui.addAttachment.type||'').startsWith('image/');
+      html += '<div class="att-preview">'+
+        (isImg ? '<img src="'+ui.addAttachment.dataUrl+'">' : '<span>'+ICONS.paperclip+'</span>')+
+        '<span style="flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">'+escapeHtml(ui.addAttachment.name)+'</span>'+
+        '<button class="btn ghost sm" id="btnRemoveAtt">Kaldır</button>'+
+      '</div>';
+    }
+
+    html += '<div class="row" style="margin-top:20px;">';
+    if(editing) html += '<button class="btn ghost grow" id="btnCancelEdit">İptal</button>';
+    html += '<button class="btn '+(type==='income'?'income':'expense')+' grow" id="btnSaveTx">'+(editing?'Değişiklikleri Kaydet':'Kaydet')+'</button>';
+    html += '</div>';
+  }
+
+  setTimeout(bindAdd, 0);
+  return html;
+}
+
+function fieldVal(id, fallback){ const el = byId(id); return el ? el.value : (fallback||''); }
+
+function formIncome(A){
+  return ''+
+  '<label class="field-label">Gelir Adı</label>'+
+  '<input type="text" id="f_ad" placeholder="Örn. Ağustos Maaşı" value="'+escapeHtml(A.ad||'')+'">'+
+  '<label class="field-label">Gelir Tarihi</label>'+
+  '<input type="date" id="f_tarih" value="'+(A.tarih||todayStr())+'">'+
+  '<label class="field-label">Tutar (TL)</label>'+
+  '<input type="number" id="f_tutar" inputmode="decimal" step="0.01" placeholder="0,00" value="'+(A.tutar||'')+'">'+
+  '<label class="field-label">Açıklama</label>'+
+  '<textarea id="f_aciklama" placeholder="İsteğe bağlı not">'+escapeHtml(A.aciklama||'')+'</textarea>';
+}
+function formNormalExpense(A){
+  return ''+
+  '<label class="field-label">Gider Adı</label>'+
+  '<input type="text" id="f_ad" placeholder="Örn. Ofis Malzemesi" value="'+escapeHtml(A.ad||'')+'">'+
+  '<label class="field-label">Gider Tarihi</label>'+
+  '<input type="date" id="f_tarih" value="'+(A.tarih||todayStr())+'">'+
+  '<label class="field-label">Makbuz No</label>'+
+  '<input type="text" id="f_belgeNo" placeholder="Örn. MK-2026-001" value="'+escapeHtml(A.belgeNo||'')+'">'+
+  '<label class="field-label">Açıklama</label>'+
+  '<textarea id="f_aciklama" placeholder="İsteğe bağlı not">'+escapeHtml(A.aciklama||'')+'</textarea>'+
+  '<label class="field-label">Tutar (TL)</label>'+
+  '<input type="number" id="f_tutar" inputmode="decimal" step="0.01" placeholder="0,00" value="'+(A.tutar||'')+'">'+
+  paymentFieldsHtml(A);
+}
+function formFatura(A, bill){
+  return ''+
+  '<label class="field-label">Fatura Adı</label>'+
+  '<input type="text" id="f_ad" placeholder="Fatura adı" value="'+escapeHtml(A.ad || (bill?bill.name:''))+'">'+
+  '<label class="field-label">Fatura Tarihi</label>'+
+  '<input type="date" id="f_tarih" value="'+(A.tarih||todayStr())+'">'+
+  '<label class="field-label">Fatura No</label>'+
+  '<input type="text" id="f_belgeNo" placeholder="Örn. F-2026-00123" value="'+escapeHtml(A.belgeNo||'')+'">'+
+  '<label class="field-label">Fatura Tutarı (TL)</label>'+
+  '<input type="number" id="f_tutar" inputmode="decimal" step="0.01" placeholder="0,00" value="'+(A.tutar||'')+'">'+
+  paymentFieldsHtml(A)+
+  '<label class="field-label">Açıklama</label>'+
+  '<textarea id="f_aciklama" placeholder="İsteğe bağlı not">'+escapeHtml(A.aciklama||'')+'</textarea>';
+}
+
+function paymentFieldsHtml(A){
+  return ''+
+  '<label class="field-label">'+ICONS.calendar+' Ödeme Tarihi</label>'+
+  '<input type="date" id="f_odemeTarihi" value="'+(A.odemeTarihi||'')+'">'+
+  '<label style="display:flex; align-items:center; gap:8px; margin-top:12px; font-size:13px; font-weight:600;">'+
+    '<input type="checkbox" id="f_odendi" style="width:auto;" '+(A.odendi?'checked':'')+'> Ödendi'+
+  '</label>';
+}
+
+function persistFieldsToUi(){
+  const A = ui.addFields = ui.addFields || {};
+  ['f_ad','f_tarih','f_belgeNo','f_tutar','f_aciklama','f_odemeTarihi'].forEach(id=>{
+    const el = byId(id);
+    if(el) A[id.slice(2)] = el.value;
+  });
+  const pd = byId('f_odendi');
+  if(pd) A.odendi = pd.checked;
+}
+
+function bindAdd(){
+  document.querySelectorAll('[data-add-type]').forEach(b=>{
+    b.addEventListener('click', ()=>{
+      ui.addType = b.getAttribute('data-add-type');
+      ui.addCategoryId = null; ui.addBillTypeId = null; ui.addFields = {}; ui.addAttachment = null;
+      renderContent();
+    });
+  });
+  document.querySelectorAll('[data-select-cat]').forEach(b=>{
+    b.addEventListener('click', ()=>{
+      ui.addCategoryId = b.getAttribute('data-select-cat');
+      ui.addBillTypeId = null; ui.addFields = {};
+      renderContent();
+    });
+  });
+  document.querySelectorAll('[data-select-bill]').forEach(b=>{
+    b.addEventListener('click', ()=>{
+      ui.addBillTypeId = b.getAttribute('data-select-bill');
+      ui.addFields = {};
+      renderContent();
+    });
+  });
+  ['f_ad','f_tarih','f_belgeNo','f_tutar','f_aciklama','f_odemeTarihi'].forEach(id=>{
+    const el = byId(id);
+    if(el) el.addEventListener('input', persistFieldsToUi);
+  });
+  const pdEl = byId('f_odendi');
+  if(pdEl) pdEl.addEventListener('change', persistFieldsToUi);
+  const pdfBtn = byId('btnAttachPdf');
+  if(pdfBtn) pdfBtn.addEventListener('click', ()=> byId('filePdfInput').click());
+  const scanBtn = byId('btnScanPdf');
+  if(scanBtn) scanBtn.addEventListener('click', ()=> byId('fileScanInput').click());
+  const pdfInput = byId('filePdfInput');
+  if(pdfInput) pdfInput.addEventListener('change', e=> handleFileAttach(e.target.files[0]));
+  const scanInput = byId('fileScanInput');
+  if(scanInput) scanInput.addEventListener('change', e=> handleFileAttach(e.target.files[0]));
+  const rmBtn = byId('btnRemoveAtt');
+  if(rmBtn) rmBtn.addEventListener('click', ()=>{ ui.addAttachment=null; renderContent(); });
+  const cancelBtn = byId('btnCancelEdit');
+  if(cancelBtn) cancelBtn.addEventListener('click', ()=>{
+    ui.editId=null; ui.addFields={}; ui.addAttachment=null; ui.addCategoryId=null; ui.addBillTypeId=null;
+    ui.tab='records'; renderContent();
+  });
+  const saveBtn = byId('btnSaveTx');
+  if(saveBtn) saveBtn.addEventListener('click', onSaveTx);
+}
+
+function handleFileAttach(file){
+  if(!file) return;
+  if(file.size > 4*1024*1024){ showToast('Dosya çok büyük (4MB üstü desteklenmiyor).'); return; }
+  const reader = new FileReader();
+  reader.onload = ()=>{
+    ui.addAttachment = { name:file.name, type:file.type, dataUrl:reader.result };
+    renderContent();
+  };
+  reader.onerror = ()=> showToast('Dosya okunamadı.');
+  reader.readAsDataURL(file);
+}
+
+async function onSaveTx(){
+  persistFieldsToUi();
+  const A = ui.addFields || {};
+  const type = ui.addType;
+  const cat = findCat(type, ui.addCategoryId);
+  if(!cat){ showToast('Lütfen bir kategori seçin.'); return; }
+  const isFaturaCat = type==='expense' && cat.isFatura;
+  const bill = isFaturaCat ? findBillType(cat, ui.addBillTypeId) : null;
+  if(isFaturaCat && !bill){ showToast('Lütfen bir fatura türü seçin.'); return; }
+  if(!A.ad || !A.ad.trim()){ showToast('Lütfen ad alanını doldurun.'); return; }
+  if(!A.tarih){ showToast('Lütfen tarih seçin.'); return; }
+  const tutar = parseFloat((A.tutar||'').toString().replace(',','.'));
+  if(isNaN(tutar) || tutar<=0){ showToast('Lütfen geçerli bir tutar girin.'); return; }
+
+  const id = ui.editId || uid('tx');
+  const tx = {
+    id,
+    mainType:type,
+    categoryId:cat.id,
+    categoryName:cat.name,
+    billTypeId: bill?bill.id:null,
+    billTypeName: bill?bill.name:null,
+    isFatura: !!isFaturaCat,
+    ad: A.ad.trim(),
+    tarih: A.tarih,
+    belgeNo: A.belgeNo||'',
+    tutar,
+    aciklama: A.aciklama||'',
+    odemeTarihi: type==='expense' ? (A.odemeTarihi||'') : '',
+    odendi: type==='expense' ? !!A.odendi : false,
+    hasAttachment: !!ui.addAttachment,
+    createdAt: ui.editId ? (state.transactions.find(t=>t.id===id)||{}).createdAt || Date.now() : Date.now()
+  };
+
+  if(ui.editId){
+    const idx = state.transactions.findIndex(t=>t.id===id);
+    if(idx>-1) state.transactions[idx]=tx; else state.transactions.push(tx);
+  }else{
+    state.transactions.push(tx);
+  }
+
+  if(ui.addAttachment){ await saveAttachment(id, ui.addAttachment); }
+  else if(ui.editId){ /* keep existing attachment if user didn't touch it */ }
+
+  const ok = await saveState();
+  if(ok){
+    showToast(ui.editId ? 'Kayıt güncellendi.' : 'Kayıt eklendi.');
+    ui.editId=null; ui.addFields={}; ui.addAttachment=null; ui.addCategoryId=null; ui.addBillTypeId=null;
+    ui.tab='records';
+    renderContent();
+  }
+}
+
+/* =================================================================
+   RECORDS SCREEN
+================================================================= */
+function allCategoriesFlat(){
+  const list=[];
+  state.categories.income.forEach(c=>list.push({id:c.id,name:c.name,mainType:'income'}));
+  state.categories.expense.forEach(c=>list.push({id:c.id,name:c.name,mainType:'expense'}));
+  return list;
+}
+
+function filteredTx(){
+  const f = ui.filters;
+  return state.transactions.filter(t=>{
+    if(f.type!=='all' && t.mainType!==f.type) return false;
+    if(f.categoryId!=='all' && t.categoryId!==f.categoryId) return false;
+    if(f.start && t.tarih < f.start) return false;
+    if(f.end && t.tarih > f.end) return false;
+    if(f.q){
+      const q = f.q.toLowerCase();
+      const hay = [t.ad,t.aciklama,t.belgeNo,t.categoryName,t.billTypeName].join(' ').toLowerCase();
+      if(!hay.includes(q)) return false;
+    }
+    return true;
+  }).sort((a,b)=> (b.tarih||'').localeCompare(a.tarih||'') || b.createdAt-a.createdAt);
+}
+
+function renderRecords(){
+  const f = ui.filters;
+  const cats = allCategoriesFlat().filter(c=> f.type==='all' ? true : c.mainType===f.type);
+  const list = filteredTx();
+  const totalIncome = list.filter(t=>t.mainType==='income').reduce((s,t)=>s+Number(t.tutar||0),0);
+  const totalExpense = list.filter(t=>t.mainType==='expense').reduce((s,t)=>s+Number(t.tutar||0),0);
+
+  let html = '<div class="filter-box">'+
+    '<div class="grid2">'+
+      '<div><label class="field-label" style="margin-top:0;">Tür</label><select id="fl_type">'+
+        '<option value="all" '+(f.type==='all'?'selected':'')+'>Tümü</option>'+
+        '<option value="income" '+(f.type==='income'?'selected':'')+'>Gelir</option>'+
+        '<option value="expense" '+(f.type==='expense'?'selected':'')+'>Gider</option>'+
+      '</select></div>'+
+      '<div><label class="field-label" style="margin-top:0;">Kategori</label><select id="fl_cat">'+
+        '<option value="all">Tümü</option>'+
+        cats.map(c=>'<option value="'+c.id+'" '+(f.categoryId===c.id?'selected':'')+'>'+escapeHtml(c.name)+'</option>').join('')+
+      '</select></div>'+
+      '<div><label class="field-label">Başlangıç</label><input type="date" id="fl_start" value="'+(f.start||'')+'"></div>'+
+      '<div><label class="field-label">Bitiş</label><input type="date" id="fl_end" value="'+(f.end||'')+'"></div>'+
+    '</div>'+
+    '<label class="field-label">Ara</label>'+
+    '<input type="text" id="fl_q" placeholder="Ad, açıklama, belge no..." value="'+escapeHtml(f.q||'')+'">'+
+    '<div class="row" style="margin-top:10px;"><button class="btn ghost sm grow" id="fl_reset">Filtreyi Temizle</button></div>'+
+  '</div>';
+
+  html += '<div class="summary-grid" style="margin-bottom:16px;">'+
+    '<div class="stat"><div class="lbl">Toplam Gelir</div><div class="val income num">'+fmtCurrency(totalIncome)+'</div></div>'+
+    '<div class="stat"><div class="lbl">Toplam Gider</div><div class="val expense num">'+fmtCurrency(totalExpense)+'</div></div>'+
+  '</div>';
+
+  html += '<div class="row" style="margin-bottom:16px;">'+
+    '<button class="btn sm grow" id="btnReportDownload">'+ICONS.download+' PDF İndir</button>'+
+    '<button class="btn sm grow" id="btnReportShare">'+ICONS.share+' Gönder</button>'+
+  '</div>';
+
+  if(list.length===0){
+    html += '<div class="empty-state"><div class="glyph">–</div><p>Kriterlere uyan kayıt bulunamadı.<br>Filtreleri değiştirin ya da yeni bir kayıt ekleyin.</p></div>';
+  }else{
+    html += list.map(t=> txCardHtml(t)).join('');
+  }
+  setTimeout(bindRecords, 0);
+  return html;
+}
+
+function paymentBadge(t){
+  if(t.mainType!=='expense' || !t.odemeTarihi) return '';
+  if(t.odendi) return '<span class="pay-badge paid">Ödendi</span>';
+  const overdue = t.odemeTarihi < todayStr();
+  return '<span class="pay-badge '+(overdue?'overdue':'upcoming')+'">'+(overdue?'Gecikti · ':'Ödeme: ')+fmtDate(t.odemeTarihi)+'</span>';
+}
+
+function txCardHtml(t){
+  const expanded = ui.expandedId===t.id;
+  const noLabel = t.isFatura ? 'Fatura No' : (t.mainType==='expense' ? 'Makbuz No' : null);
+  let detail = '';
+  if(expanded){
+    detail += '<div class="detail">';
+    detail += '<div class="detail-row"><span>Kategori</span><b>'+escapeHtml(t.categoryName)+(t.billTypeName?(' / '+escapeHtml(t.billTypeName)):'')+'</b></div>';
+    detail += '<div class="detail-row"><span>Tarih</span><b>'+fmtDate(t.tarih)+'</b></div>';
+    if(noLabel) detail += '<div class="detail-row"><span>'+noLabel+'</span><b>'+escapeHtml(t.belgeNo||'—')+'</b></div>';
+    if(t.mainType==='expense' && t.odemeTarihi){
+      detail += '<div class="detail-row"><span>Ödeme Tarihi</span><b>'+fmtDate(t.odemeTarihi)+'</b></div>';
+      detail += '<div class="detail-row"><span>Ödeme Durumu</span><b>'+(t.odendi?'Ödendi':'Bekliyor')+'</b></div>';
+    }
+    if(t.aciklama) detail += '<div class="detail-row"><span>Açıklama</span><b>'+escapeHtml(t.aciklama)+'</b></div>';
+    detail += '<div class="detail-row"><span>Tutar</span><b class="num">'+fmtCurrency(t.tutar)+'</b></div>';
+    if(t.hasAttachment) detail += '<div class="detail-row"><span>Ek Belge</span><b><a href="#" data-view-att="'+t.id+'" style="color:var(--gold);">Görüntüle</a></b></div>';
+    detail += '<div class="detail-actions">';
+    if(t.mainType==='expense' && t.odemeTarihi){
+      detail += '<button class="btn sm grow" data-toggle-paid="'+t.id+'">'+(t.odendi?'Ödenmedi İşaretle':'Ödendi İşaretle')+'</button>';
+    }
+    detail += '<button class="btn sm grow" data-edit-tx="'+t.id+'">Düzenle</button><button class="btn sm danger grow" data-del-tx="'+t.id+'">Sil</button></div>';
+    detail += '</div>';
+  }
+  return '<div class="tx-card">'+
+    '<div class="tx-main" data-toggle-tx="'+t.id+'">'+
+      '<div class="bar '+t.mainType+'"></div>'+
+      '<div class="mid"><div class="name">'+escapeHtml(t.ad)+'</div>'+
+        '<div class="meta">'+fmtDate(t.tarih)+' · '+escapeHtml(t.categoryName)+(t.hasAttachment?' · 📎':'')+'</div>'+
+        (paymentBadge(t) ? '<div style="margin-top:4px;">'+paymentBadge(t)+'</div>' : '')+
+      '</div>'+
+      '<div class="amt '+t.mainType+' num">'+(t.mainType==='income'?'+':'-')+fmtCurrency(t.tutar)+'</div>'+
+    '</div>'+
+    detail+
+  '</div>';
+}
+
+function bindRecords(){
+  byId('fl_type').addEventListener('change', e=>{ ui.filters.type=e.target.value; ui.filters.categoryId='all'; renderContent(); });
+  byId('fl_cat').addEventListener('change', e=>{ ui.filters.categoryId=e.target.value; renderContent(); });
+  byId('fl_start').addEventListener('change', e=>{ ui.filters.start=e.target.value; renderContent(); });
+  byId('fl_end').addEventListener('change', e=>{ ui.filters.end=e.target.value; renderContent(); });
+  byId('fl_q').addEventListener('input', e=>{ ui.filters.q=e.target.value; renderContent(); });
+  byId('fl_reset').addEventListener('click', ()=>{ ui.filters={type:'all',categoryId:'all',start:'',end:'',q:''}; renderContent(); });
+
+  document.querySelectorAll('[data-toggle-tx]').forEach(el=>{
+    el.addEventListener('click', ()=>{
+      const id = el.getAttribute('data-toggle-tx');
+      ui.expandedId = ui.expandedId===id ? null : id;
+      renderContent();
+    });
+  });
+  document.querySelectorAll('[data-edit-tx]').forEach(el=>{
+    el.addEventListener('click', ev=>{
+      ev.stopPropagation();
+      const id = el.getAttribute('data-edit-tx');
+      const t = state.transactions.find(x=>x.id===id);
+      if(!t) return;
+      ui.editId = id;
+      ui.addType = t.mainType;
+      ui.addCategoryId = t.categoryId;
+      ui.addBillTypeId = t.billTypeId || null;
+      ui.addFields = { ad:t.ad, tarih:t.tarih, belgeNo:t.belgeNo, tutar:t.tutar, aciklama:t.aciklama, odemeTarihi:t.odemeTarihi, odendi:t.odendi };
+      ui.addAttachment = null;
+      ui.tab = 'add';
+      renderContent();
+    });
+  });
+  document.querySelectorAll('[data-toggle-paid]').forEach(el=>{
+    el.addEventListener('click', async ev=>{
+      ev.stopPropagation();
+      const id = el.getAttribute('data-toggle-paid');
+      const t = state.transactions.find(x=>x.id===id);
+      if(!t) return;
+      t.odendi = !t.odendi;
+      const ok = await saveState();
+      if(ok){ showToast(t.odendi ? 'Ödendi olarak işaretlendi.' : 'Ödenmedi olarak işaretlendi.'); renderContent(); }
+    });
+  });
+  document.querySelectorAll('[data-del-tx]').forEach(el=>{
+    el.addEventListener('click', async ev=>{
+      ev.stopPropagation();
+      const id = el.getAttribute('data-del-tx');
+      if(!confirm('Bu kaydı silmek istediğinize emin misiniz?')) return;
+      state.transactions = state.transactions.filter(t=>t.id!==id);
+      await deleteAttachment(id);
+      const ok = await saveState();
+      if(ok){ showToast('Kayıt silindi.'); ui.expandedId=null; renderContent(); }
+    });
+  });
+  document.querySelectorAll('[data-view-att]').forEach(el=>{
+    el.addEventListener('click', async ev=>{
+      ev.preventDefault(); ev.stopPropagation();
+      const id = el.getAttribute('data-view-att');
+      const att = await getAttachment(id);
+      if(!att){ showToast('Ek belge bulunamadı.'); return; }
+      const w = window.open();
+      if(w){
+        if((att.type||'').startsWith('image/')) w.document.write('<img src="'+att.dataUrl+'" style="max-width:100%;">');
+        else w.location.href = att.dataUrl;
+      }
+    });
+  });
+  const dlBtn = byId('btnReportDownload');
+  if(dlBtn) dlBtn.addEventListener('click', downloadReport);
+  const shBtn = byId('btnReportShare');
+  if(shBtn) shBtn.addEventListener('click', shareReport);
+}
+
+function downloadReport(){
+  const list = filteredTx();
+  const totalIncome = list.filter(t=>t.mainType==='income').reduce((s,t)=>s+Number(t.tutar||0),0);
+  const totalExpense = list.filter(t=>t.mainType==='expense').reduce((s,t)=>s+Number(t.tutar||0),0);
+  const w = window.open('', '_blank');
+  if(!w){ showToast('Yeni pencere engellendi. Lütfen izin verin.'); return; }
+  const rows = list.map(t=>
+    '<tr><td>'+fmtDate(t.tarih)+'</td><td>'+(t.mainType==='income'?'Gelir':'Gider')+'</td><td>'+escapeHtml(t.categoryName)+(t.billTypeName?(' / '+escapeHtml(t.billTypeName)):'')+'</td><td>'+escapeHtml(t.ad)+'</td><td>'+escapeHtml(t.belgeNo||'')+'</td><td style="text-align:right;">'+fmtCurrency(t.tutar)+'</td></tr>'
+  ).join('');
+  const html = '<!DOCTYPE html><html lang="tr"><head><meta charset="UTF-8"><title>Defter Raporu</title>'+
+    '<style>body{font-family:Arial,sans-serif;padding:24px;color:#20291F;}h1{margin-bottom:2px;}p.sub{color:#5B6459;margin-top:0;}'+
+    'table{width:100%;border-collapse:collapse;margin-top:16px;font-size:12.5px;}th,td{border-bottom:1px solid #DAD3C0;padding:6px 8px;text-align:left;}'+
+    '.tot{display:flex;gap:24px;margin-top:14px;font-size:14px;}.tot b{display:block;font-size:17px;}'+
+    '@media print{ .noprint{display:none;} }</style></head><body>'+
+    '<h1>Defter — Gelir Gider Raporu</h1><p class="sub">Oluşturulma: '+new Date().toLocaleString('tr-TR')+'</p>'+
+    '<div class="tot"><div>Toplam Gelir<b style="color:#2F6F4E;">'+fmtCurrency(totalIncome)+'</b></div>'+
+    '<div>Toplam Gider<b style="color:#A8452F;">'+fmtCurrency(totalExpense)+'</b></div>'+
+    '<div>Net<b>'+fmtCurrency(totalIncome-totalExpense)+'</b></div></div>'+
+    '<table><thead><tr><th>Tarih</th><th>Tür</th><th>Kategori</th><th>Ad</th><th>Belge No</th><th style="text-align:right;">Tutar</th></tr></thead><tbody>'+rows+'</tbody></table>'+
+    '<p class="noprint" style="margin-top:20px;color:#5B6459;font-size:12px;">Bu pencere yazdırma için açıldı. Yazdır menüsünden "PDF olarak kaydet" seçeneğini kullanabilirsiniz.</p>'+
+    '</body></html>';
+  w.document.open(); w.document.write(html); w.document.close();
+  setTimeout(()=>{ try{ w.focus(); w.print(); }catch(e){} }, 350);
+}
+
+async function shareReport(){
+  const list = filteredTx();
+  const totalIncome = list.filter(t=>t.mainType==='income').reduce((s,t)=>s+Number(t.tutar||0),0);
+  const totalExpense = list.filter(t=>t.mainType==='expense').reduce((s,t)=>s+Number(t.tutar||0),0);
+  const text = 'Defter Raporu\\nKayıt sayısı: '+list.length+'\\nToplam Gelir: '+fmtCurrency(totalIncome)+'\\nToplam Gider: '+fmtCurrency(totalExpense)+'\\nNet: '+fmtCurrency(totalIncome-totalExpense);
+  if(navigator.share){
+    try{ await navigator.share({ title:'Defter Raporu', text }); return; }catch(e){ /* user cancelled or unsupported, fall through */ }
+  }
+  try{ await navigator.clipboard.writeText(text); showToast('Özet panoya kopyalandı.'); }
+  catch(e){ alert(text); }
+}
+
+/* =================================================================
+   CATEGORIES SCREEN
+================================================================= */
+function renderCategories(){
+  let html = '<div class="card" style="margin-bottom:20px; background:var(--gold-bg); border-color:var(--gold);">'+
+    '<div style="font-weight:700; font-size:13.5px; margin-bottom:4px;">'+ICONS.download+' Veri Yönetimi</div>'+
+    '<div style="font-size:12.5px; color:var(--ink-soft); line-height:1.5; margin-bottom:10px;">Tüm verileriniz bu cihazda saklanır. Kayıp yaşamamak için düzenli olarak yedek alıp Mail, Drive ya da Dosyalar\'a göndermenizi öneririz.</div>'+
+    '<div class="row">'+
+      '<button class="btn sm grow" id="btnShareBackup">'+ICONS.share+' Yedeği Gönder</button>'+
+      '<button class="btn ghost sm grow" id="btnExportBackup">'+ICONS.download+' İndir</button>'+
+    '</div>'+
+    '<button class="btn ghost sm block" id="btnImportBackup" style="margin-top:8px;">Yedekten Geri Yükle</button>'+
+    '<input type="file" id="fileImportBackup" accept="application/json,.json" style="display:none">'+
+  '</div>';
+  html += '<div class="section-label" style="margin-top:0;">Gelir Kategorileri</div>';
+  if(state.categories.income.length===0){
+    html += '<div class="empty-state" style="padding:16px 6px;"><p>Henüz gelir kategorisi yok.</p></div>';
+  }else{
+    html += state.categories.income.map(c=>
+      '<div class="cat-card" style="cursor:default;"><span class="name">'+escapeHtml(c.name)+'</span>'+
+      '<span class="row" style="gap:6px;"><button class="btn ghost sm" data-edit-inc="'+c.id+'">Düzenle</button><button class="btn ghost sm danger" data-del-inc="'+c.id+'">Sil</button></span></div>'
+    ).join('');
+  }
+  html += '<div class="row" style="margin-top:8px;">'+
+    '<input type="text" id="newIncomeCat" placeholder="Yeni gelir kategorisi adı" class="grow">'+
+    '<button class="btn income sm" id="btnAddIncomeCat">Ekle</button>'+
+  '</div>';
+
+  html += '<div class="section-label">Gider Kategorileri</div>';
+  if(state.categories.expense.length===0){
+    html += '<div class="empty-state" style="padding:16px 6px;"><p>Henüz gider kategorisi yok.</p></div>';
+  }else{
+    html += state.categories.expense.map(c=>{
+      let sub = '';
+      if(c.isFatura){
+        const bts = c.billTypes||[];
+        sub += '<div style="padding:0 4px 4px;">';
+        sub += bts.map(b=>'<div class="subitem"><span>'+escapeHtml(b.name)+'</span><span class="row" style="gap:6px;"><button class="btn ghost sm" data-edit-bill data-cat="'+c.id+'" data-bill="'+b.id+'">Düzenle</button><button class="btn ghost sm danger" data-del-bill data-cat="'+c.id+'" data-bill="'+b.id+'">Sil</button></span></div>').join('');
+        sub += '<div class="row" style="margin-top:8px;"><input type="text" class="grow newBillInput" data-cat="'+c.id+'" placeholder="Yeni fatura türü (Örn. Kira Faturası)"><button class="btn sm" data-add-bill="'+c.id+'">Ekle</button></div>';
+        sub += '</div>';
+      }
+      return '<div class="card" style="margin-bottom:9px; padding:12px 13px;">'+
+        '<div style="display:flex; align-items:center; justify-content:space-between;">'+
+          '<span class="name" style="font-weight:600;">'+escapeHtml(c.name)+(c.isFatura?' <span class="tag" style="margin-left:4px;">Fatura</span>':'')+'</span>'+
+          '<span class="row" style="gap:6px;"><button class="btn ghost sm" data-edit-exp="'+c.id+'">Düzenle</button><button class="btn ghost sm danger" data-del-exp="'+c.id+'">Sil</button></span>'+
+        '</div>'+ sub +
+      '</div>';
+    }).join('');
+  }
+
+  html += '<div class="card" style="margin-top:10px;">'+
+    '<label class="field-label" style="margin-top:0;">Yeni Gider Kategorisi</label>'+
+    '<input type="text" id="newExpenseCat" placeholder="Örn. Şirket Gideri, Fatura...">'+
+    '<label style="display:flex; align-items:center; gap:8px; margin-top:10px; font-size:13px; font-weight:600;">'+
+      '<input type="checkbox" id="newExpenseIsFatura" style="width:auto;"> Bu kategori fatura türleri içersin (elektrik, su, doğalgaz vb.)'+
+    '</label>'+
+    '<button class="btn expense block" id="btnAddExpenseCat" style="margin-top:12px;">Kategori Ekle</button>'+
+  '</div>';
+
+  setTimeout(bindCategories, 0);
+  return html;
+}
+
+async function persistCats(){ return await saveState(); }
+
+function bindCategories(){
+  const shareBtn = byId('btnShareBackup');
+  if(shareBtn) shareBtn.addEventListener('click', shareBackup);
+  const expBtn = byId('btnExportBackup');
+  if(expBtn) expBtn.addEventListener('click', exportBackup);
+  const impBtn = byId('btnImportBackup');
+  if(impBtn) impBtn.addEventListener('click', ()=> byId('fileImportBackup').click());
+  const impFile = byId('fileImportBackup');
+  if(impFile) impFile.addEventListener('change', e=> importBackupFile(e.target.files[0]));
+
+  document.querySelectorAll('[data-edit-inc]').forEach(b=> b.addEventListener('click', async ()=>{
+    const c = findCat('income', b.getAttribute('data-edit-inc'));
+    const n = prompt('Yeni kategori adı:', c.name);
+    if(n && n.trim()){ c.name=n.trim(); await persistCats(); renderContent(); }
+  }));
+  document.querySelectorAll('[data-del-inc]').forEach(b=> b.addEventListener('click', async ()=>{
+    if(!confirm('Bu gelir kategorisini silmek istiyor musunuz?')) return;
+    state.categories.income = state.categories.income.filter(c=>c.id!==b.getAttribute('data-del-inc'));
+    await persistCats(); renderContent();
+  }));
+  const addIncBtn = byId('btnAddIncomeCat');
+  if(addIncBtn) addIncBtn.addEventListener('click', async ()=>{
+    const inp = byId('newIncomeCat'); const v = inp.value.trim();
+    if(!v){ showToast('Kategori adı girin.'); return; }
+    state.categories.income.push({id:uid('inc'), name:v});
+    await persistCats(); showToast('Kategori eklendi.'); renderContent();
+  });
+
+  document.querySelectorAll('[data-edit-exp]').forEach(b=> b.addEventListener('click', async ()=>{
+    const c = findCat('expense', b.getAttribute('data-edit-exp'));
+    const n = prompt('Yeni kategori adı:', c.name);
+    if(n && n.trim()){ c.name=n.trim(); await persistCats(); renderContent(); }
+  }));
+  document.querySelectorAll('[data-del-exp]').forEach(b=> b.addEventListener('click', async ()=>{
+    if(!confirm('Bu gider kategorisini silmek istiyor musunuz?')) return;
+    state.categories.expense = state.categories.expense.filter(c=>c.id!==b.getAttribute('data-del-exp'));
+    await persistCats(); renderContent();
+  }));
+  const addExpBtn = byId('btnAddExpenseCat');
+  if(addExpBtn) addExpBtn.addEventListener('click', async ()=>{
+    const inp = byId('newExpenseCat'); const v = inp.value.trim();
+    const isF = byId('newExpenseIsFatura').checked;
+    if(!v){ showToast('Kategori adı girin.'); return; }
+    const cat = {id:uid('exp'), name:v, isFatura:isF};
+    if(isF) cat.billTypes = [];
+    state.categories.expense.push(cat);
+    await persistCats(); showToast('Kategori eklendi.'); renderContent();
+  });
+
+  document.querySelectorAll('[data-add-bill]').forEach(b=> b.addEventListener('click', async ()=>{
+    const catId = b.getAttribute('data-add-bill');
+    const cat = findCat('expense', catId);
+    const inp = document.querySelector('.newBillInput[data-cat="'+catId+'"]');
+    const v = inp.value.trim();
+    if(!v){ showToast('Fatura türü adı girin.'); return; }
+    cat.billTypes = cat.billTypes||[];
+    cat.billTypes.push({id:uid('bt'), name:v});
+    await persistCats(); showToast('Fatura türü eklendi.'); renderContent();
+  }));
+  document.querySelectorAll('[data-edit-bill]').forEach(b=> b.addEventListener('click', async ()=>{
+    const cat = findCat('expense', b.getAttribute('data-cat'));
+    const bill = findBillType(cat, b.getAttribute('data-bill'));
+    const n = prompt('Yeni fatura türü adı:', bill.name);
+    if(n && n.trim()){ bill.name=n.trim(); await persistCats(); renderContent(); }
+  }));
+  document.querySelectorAll('[data-del-bill]').forEach(b=> b.addEventListener('click', async ()=>{
+    if(!confirm('Bu fatura türünü silmek istiyor musunuz?')) return;
+    const cat = findCat('expense', b.getAttribute('data-cat'));
+    cat.billTypes = (cat.billTypes||[]).filter(x=>x.id!==b.getAttribute('data-bill'));
+    await persistCats(); renderContent();
+  }));
+}
+
+/* ---------------- GLOBAL (unused placeholder for future delegation) ---------------- */
+function bindGlobalDelegation(){ /* per-screen binders handle their own events */ }
+
+/* ---------------- INIT ---------------- */
+async function init(){
+  renderShell();
+  setupPwaAssets();
+  byId('content').innerHTML = '<div class="empty-state"><div class="glyph">…</div><p>Yükleniyor</p></div>';
+  await detectStorageBackend();
+  await loadState();
+  renderContent();
+}
+init();
+
+})();
+</script>
+</body>
+</html>
